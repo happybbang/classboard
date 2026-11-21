@@ -243,5 +243,6 @@ async function v4StudentBoot(){document.querySelector('.shell').innerHTML='<sect
 
 const v4CloudPull=cloudPull;cloudPull=async function(automatic=false){await v4CloudPull(automatic);if(cloudReady)await v4ImportTablet(true);};
 let v4FocusBusy=false;window.addEventListener('focus',async()=>{if(v4TabletTeacher||!cloudReady||cloudBusy||cloudDirty||v4FocusBusy)return;v4FocusBusy=true;try{const m=await manifest().get({source:'server'});if(m.exists&&m.data().rev!==cloudRevision&&!cloudDirty&&!cloudBusy)await cloudPull(true);else await v4ImportTablet(true);}catch(e){}finally{v4FocusBusy=false;}});
+</script><script src="growth-v5.js?v=5"></script><script>
 if(v4TabletTeacher&&/^[A-Za-z0-9_-]{10,128}$/.test(v4TabletTeacher))v4StudentBoot();else boot();
 </script></body></html>
