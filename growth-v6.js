@@ -301,7 +301,7 @@ home=function(){
  // Replace the old twice-weekly calendar with the Friday reflection notice.
  const p=html.indexOf('<div class="v6-weekstrip">');
  if(p>=0){const start=html.indexOf('<section class="panel">',p);if(start>=0)html=html.slice(0,p)+'<div class="v7-weeknote"><b>☀️ 금요일에 한 번, 나의 약속 돌아보기</b><span>월~금은 교사가 5점 만점으로 기록하고, 금요일에는 학생이 목표별로 스스로 1~5점을 매겨요. 솔직한 자기평가를 마치면 +1점!</span></div>'+html.slice(start);}
- return html.replace('자기평가 날은 교사 4점 + 참여 1점, 나머지는 교사 5점. 기존 기록은 수정하지 않으면 그대로 유지됩니다.','매일 교사 5점 만점 · 금요일 학생 자기평가 참여 +1점 · 특별 칭찬은 별도. 기존 점수는 수정하지 않으면 그대로 유지됩니다.').replace('공용 태블릿 자기점검','금요일 함께 돌아보기');
+ return html.replace('자기평가 날은 교사 4점 + 참여 1점, 나머지는 교사 5점. 기존 기록은 수정하지 않으면 그대로 유지됩니다.','매일 교사 5점 만점 · 금요일 학생 자기평가 참여 +1점 · 특별 칭찬은 별도. 기존 점수는 수정하지 않으면 그대로 유지됩니다.').replace('<button class="green" onclick="tab(\'dailyMenu\')">공용 태블릿 자기점검</button>','<button class="green" onclick="startPresent()">금요일 함께 돌아보기</button>');
 };
 const v7OldSettings=settings;
 settings=function(){
