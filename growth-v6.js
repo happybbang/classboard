@@ -233,3 +233,92 @@ v5Pristine=function(){return v6Pristine()&&!db.selfCheckDays&&!db.selfCheckWeeks
 document.head.insertAdjacentHTML('beforeend',`<style>
 :root{--ink:#35483f;--muted:#6e8175;--line:#e7e9df;--blue:#4d8069;--mint:#559578;--yellow:#f3cd7e;--bg:#faf9f3}body{background:radial-gradient(ellipse at top left,#fff4d8 0,transparent 32%),#faf9f3;color:var(--ink)}.shell{max-width:1320px;padding:24px}.brand{letter-spacing:-1px;color:#365b4c}.brand span{color:#bc8245}.header{padding:8px 0}.tabs{gap:7px;padding:8px;background:#fffdf7;border:1px solid #ece8db;border-radius:22px}.tabs button{border:0;border-radius:14px;color:#5a7062;background:transparent}.tabs button.active,button.active,button.primary{background:#467d63;color:white}.panel{border-radius:24px;border-color:#e8e8dc;box-shadow:0 5px 22px #5e6f5610;background:#fffefa}.panel h2{letter-spacing:-.6px}.v6-welcome{display:flex;justify-content:space-between;align-items:center;padding:26px 35px;margin-bottom:14px;background:linear-gradient(115deg,#e4f1e5,#fff1cf);border:1px solid #e4eada;border-radius:26px;overflow:hidden}.v6-welcome small{font-weight:850;letter-spacing:2px;color:#61836c}.v6-welcome h1{font-size:clamp(30px,4vw,48px);margin:8px 0 0;letter-spacing:-2px;color:#345e49}.v6-welcome p{font-size:17px;margin:8px 0 0;color:#687d67}.v6-sun{flex-shrink:0;border-radius:50%;background:#ffe2a1;color:#b77c2b;width:94px;height:94px;display:grid;place-items:center;font-size:63px;box-shadow:0 0 0 12px #ffedc9}.v6-weekstrip{padding:18px;background:#fffefa;border:1px solid #e6e7dc;border-radius:20px;margin:0 0 14px}.v6-weekstrip small{display:block;margin:5px 0;color:#738075}.v6-plan-days{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:10px}.v6-plan-days>div{background:#f3f3ec;border:1px solid #e9eade;border-radius:14px;padding:10px;text-align:center;display:grid;gap:6px;align-content:start}.v6-plan-days>div.on{background:#e2f1e5;border-color:#b4d6ba;color:#386747}.v6-plan-days strong{font-size:22px}.v6-plan-days span{font-size:12px}.v6-plan-days button{font-size:11px;padding:5px;background:#fffefa;color:#526d5c}.v5-table{border-collapse:separate;border-spacing:3px}.v5-table td,.v5-table th{border:0;background:#f9f8f2;border-radius:13px}.v5-table thead th{background:#e9eee5;color:#496353;padding:12px 8px}.v5-table td.v6-checkday{background:#eaf5e9}.v5-table select{background:#fffefa;border-color:#dfe5d8;color:#365b4c}.v5-table td small{color:#56755f}.v5-total-sm{color:#426852}.v6-name{background:#f1ead9;color:#635638}.v5-section{border-color:#e7e5d8;background:#fffefa}.v5-pick{background:#fffefa;border-color:#e7e7dc}.v4-present{background:#fffefa}.v4-present h1{color:#365b4c;letter-spacing:-1px}.v4-total{color:#467d63!important}.v4-answer{background:#f6f4ec;border-color:#e3e6da;color:#405c4b}.v4-answer.chosen{background:#e1f2df;border-color:#5e9a6e;color:#315b3d}.v4-student{background:#fff8e6;border:2px solid #e4d9b8;color:#5d6048}.v4-student:hover{background:#e6f2e1}.v6-rest{text-align:center;padding:60px 20px}.v6-rest .v6-sun{margin:20px auto 38px}.v6-rest p{font-size:22px}.v4-daygrid>div,.v4-daygrid>button{background:#f6f5eb;border-color:#e8e7db;color:#476453}.v4-daygrid>button.active{background:#dceede;color:#325e45}.v5-feedbackcards>div{border-color:#e1e7da;background:#fffefa}.v5-bonus input{border-color:#dedfd3}.v5-daily .v4-dailygoal{background:#f9f8ef;border-radius:22px;padding:14px}.v4-nav{border-top-color:#e4e7dc}.v6-weekstrip .on button{border:1px solid #d6e6d4}.hint{color:#697c6d}.positive{background:#edf7e9;border-color:#c6e2bf}.practice{background:#fff5dd;border-color:#ecd9a4}@media(max-width:700px){.shell{padding:12px}.v6-welcome{padding:20px}.v6-sun{width:58px;height:58px;font-size:38px;box-shadow:0 0 0 7px #ffedc9}.v6-plan-days>div{padding:6px 2px}.v6-plan-days span{font-size:10px}.v6-plan-days button{font-size:10px;padding:4px 2px}}
 </style>`);
+
+/* V7: Friday-only self-rating (2026-11-26). */
+// Historical records are never recalculated. New teacher entries are scored 0..5,
+// and a completed Friday reflection earns one additional participation point.
+const v7OldTotal=total;
+function v7Reflected(r){const gs=(Array.isArray(r.goals)&&r.goals.length?r.goals:[{text:r.promise||'이번 주 약속'}]).filter(g=>g.text);return !!(r.fridaySelfScores&&gs.every((_,j)=>Number.isInteger(r.fridaySelfScores[j])&&r.fridaySelfScores[j]>=1&&r.fridaySelfScores[j]<=5));}
+total=function(r){return v7OldTotal(r)+(r.fridayBonusEnabled&&v7Reflected(r)?1:0);};
+function v7TeacherScore(i,j,v){
+ const r=record(i);const n=v===''?null:Number(v);
+ if(n!==null&&(!Number.isInteger(n)||n<0||n>5))return;
+ r.scoreV5??=[false,false,false,false,false];
+ r.scoreV6??=[false,false,false,false,false];
+ r.scoreV5[j]=false;r.scoreV6[j]=false;
+ r.scores[j]=n;
+ // Keep historical check-ins untouched; new scores do not recompute from them.
+ r.fridayTeacherEdited??=[false,false,false,false,false];
+ r.fridayTeacherEdited[j]=true;
+ save();render();
+}
+v5Score=v7TeacherScore;
+score=function(n){v7TeacherScore(selected,dayIdx,n);};
+v5Row=function(i){
+ const r=record(i),s=db.students[i];
+ return '<tr><th><button class="v6-name" onclick="selected='+i+';v5Detailed=false;tab(\'edit\')">'+esc(s.name)+'</button></th>'+
+ DAYS.map((d,j)=>'<td><select aria-label="'+esc(s.name)+' '+d+' 교사점수" onchange="v7TeacherScore('+i+','+j+',this.value)">'+
+ '<option value="">'+(r.scores[j]===null?'미입력':(!r.fridayTeacherEdited?.[j]?'기존 '+r.scores[j]+'점':'미입력'))+'</option>'+
+ [0,1,2,3,4,5].map(n=>'<option value="'+n+'" '+(r.fridayTeacherEdited?.[j]&&r.scores[j]===n?'selected':'')+'>'+n+'</option>').join('')+
+ '</select><small>교사 평가 · 5점 만점</small><label class="v5-bonus">칭찬 +<input type="number" min="0" max="99" value="'+(r.plus[j]||0)+'" onchange="v5Bonus('+i+','+j+',this.value)"></label></td>').join('')+
+ '<td><strong class="v5-total-sm">'+weekTotal(r)+'</strong><small>'+(v7Reflected(r)?'금요일 돌아보기 +1':'금요일 자기평가 대기')+'</small><button onclick="selected='+i+';tab(\'edit\')">기록</button></td></tr>';
+};
+function v7Self(i,j,n){
+ const r=record(i);r.fridaySelfScores??={};r.fridaySelfScores[j]=n;
+ // Reflection is worth one point no matter which honest score is selected.
+ r.fridayBonusEnabled=true;save();render();
+}
+function v7Goals(r,s){return v4Goals(r,s).slice(0,2).filter(g=>g.text?.trim()).length?v4Goals(r,s).slice(0,2).filter(g=>g.text?.trim()):[{text:r.promise||s.promise||'이번 주 약속'}];}
+function v7Rating(r,s){
+ const goals=v7Goals(r,s);
+ return '<h1>이번 주 나의 약속, 몇 점일까요?</h1><p class="v4-caption">그림을 보고 이번 주 나의 행동을 생각해 봐요. 정답은 없어요.</p>'+
+ goals.map((g,j)=>'<div class="v7-goalrate">'+v5GoalPicture(g,s)+'<div class="v7-goaltext">'+esc(g.text)+'</div><div class="v7-rating">'+[1,2,3,4,5].map(n=>'<button aria-label="'+n+'점" class="'+(r.fridaySelfScores?.[j]===n?'chosen':'')+'" onclick="v7Self('+presentPeople[presentIdx]+','+j+','+n+')"><strong>'+n+'</strong><small>점</small></button>').join('')+'</div></div>').join('')+
+ '<p class="v7-motivate">'+(v7Reflected(r)?'🌱 솔직하게 돌아본 나의 노력 +1점!':'어떤 점수를 골라도, 스스로 돌아보면 +1점!')+'</p>';
+}
+function v7TeacherAverage(r){const nums=r.scores.filter(x=>x!==null).map(Number);return nums.length?(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1):'—';}
+function v7Compare(r,s){
+ const g=v7Goals(r,s);
+ return '<div class="v7-compare"><div><span>내가 생각한 점수</span><strong>'+ (v7Reflected(r)?g.map((x,j)=>esc(x.text)+' · '+r.fridaySelfScores[j]+'점').join('<br>'):'아직 평가하지 않았어요')+'</strong></div><div><span>선생님 평가 · 하루 평균</span><strong>'+v7TeacherAverage(r)+' / 5점</strong></div></div>'+
+ '<p class="v4-caption">두 점수가 달라도 괜찮아요. 서로의 생각을 들어 봐요.</p>'+
+ '<h1>이번 주 나의 노력 점수</h1><div class="v4-total">'+weekTotal(r)+'</div>'+
+ '<div class="v4-daygrid">'+DAYS.map((d,j)=>'<div><b>'+d+'</b><strong>'+v5DayPoint(r,j)+'</strong></div>').join('')+'</div>'+
+ '<p class="v4-caption">기본 교사 평가 25점 + 금요일 자기평가 참여 1점 + 특별 칭찬 점수 · 지난주 '+weekTotal(db.weeks[lastWeek()]?.[s.id])+'</p>'+
+ '<div class="positive"><h2>🌟 이번 주 잘한 행동</h2>'+v5Feedback(r,'positive')+'</div>';
+}
+const v7OldPresent=present;
+present=function(){
+ const html=v7OldPresent();
+ if(reviewStage!==1&&reviewStage!==2)return html;
+ if(!presentPeople.length)return html;
+ const {r,s}=v4Current();
+ const begin=html.indexOf('<div class="v4-body">'),end=html.indexOf('<div class="v4-nav">',begin);
+ if(begin<0||end<0)return html;
+ return html.slice(0,begin)+'<div class="v4-body">'+(reviewStage===1?v7Rating(r,s):v7Compare(r,s))+'</div>'+html.slice(end);
+};
+const v7OldHome=home;
+home=function(){
+ let html=v7OldHome();
+ // Replace the old twice-weekly calendar with the Friday reflection notice.
+ const p=html.indexOf('<div class="v6-weekstrip">');
+ if(p>=0){const start=html.indexOf('<section class="panel">',p);if(start>=0)html=html.slice(0,p)+'<div class="v7-weeknote"><b>☀️ 금요일에 한 번, 나의 약속 돌아보기</b><span>월~금은 교사가 5점 만점으로 기록하고, 금요일에는 학생이 목표별로 스스로 1~5점을 매겨요. 솔직한 자기평가를 마치면 +1점!</span></div>'+html.slice(start);}
+ return html.replace('자기평가 날은 교사 4점 + 참여 1점, 나머지는 교사 5점. 기존 기록은 수정하지 않으면 그대로 유지됩니다.','매일 교사 5점 만점 · 금요일 학생 자기평가 참여 +1점 · 특별 칭찬은 별도. 기존 점수는 수정하지 않으면 그대로 유지됩니다.').replace('공용 태블릿 자기점검','금요일 함께 돌아보기');
+};
+const v7OldSettings=settings;
+settings=function(){
+ const raw=v7OldSettings(),cut=raw.indexOf('<section class="panel"><h2>자기평가 요일 설정');
+ const next=cut===0?raw.indexOf('</section>',cut)+10:-1;
+ return cut===0&&next>0?'<section class="panel"><h2>금요일 자기평가 운영</h2><p>월~금 교사 평가 5점 만점, 금요일 목표별 자기평가 1~5점, 참여 보너스 +1점입니다. 지난주 기록과 기존 요일별 자기점검은 보존되며 점수는 자동 변경되지 않습니다.</p></section>'+raw.slice(next):raw;
+};
+const v7OldTab=tab;
+tab=function(t){if(t==='daily'||t==='dailyMenu'){toast('자기평가는 금요일 발표에서 한 번 진행해요.');t='home';}return v7OldTab(t);};
+document.querySelector('[data-tab="dailyMenu"]')?.remove();
+document.head.insertAdjacentHTML('beforeend',`<style>
+.v7-weeknote{background:#eaf5e7;border:1px solid #c5e4c5;padding:16px 22px;margin-bottom:14px;border-radius:18px;display:grid;gap:5px;color:#355f46}.v7-weeknote span{font-size:14px;line-height:1.6}
+.v7-goalrate{background:#fffdf8;border:2px solid #e3e9de;border-radius:22px;padding:16px;display:grid;grid-template-columns:minmax(110px,28%) 1fr;gap:10px 22px;align-items:center;margin:12px auto;max-width:1030px}
+.v7-goalrate .v5-art,.v7-goalrate .v4-picture{max-height:19vh;grid-row:span 2}.v7-goaltext{font-size:clamp(22px,3vw,37px);font-weight:900;text-align:left}
+.v7-rating{display:flex;gap:10px}.v7-rating button{flex:1;min-height:100px;background:#f4f5ed;border:3px solid #dfe5d8;border-radius:18px;display:grid;place-items:center;color:#476451}
+.v7-rating button strong{font-size:clamp(30px,4.5vw,65px);line-height:1}.v7-rating button small{font-size:17px}.v7-rating button.chosen{background:#d7f0d9;border-color:#378356}
+.v7-motivate{text-align:center;font-size:clamp(16px,2.2vw,25px);font-weight:800;color:#527358}
+.v7-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px auto}.v7-compare>div{background:#ecf4e9;border-radius:18px;padding:16px;display:grid;gap:10px;text-align:center}.v7-compare>div+div{background:#edf1f9}.v7-compare span{font-size:clamp(16px,2vw,25px);font-weight:800}.v7-compare strong{font-size:clamp(21px,3.4vw,45px);line-height:1.5}
+@media(max-width:750px){.v7-goalrate{grid-template-columns:1fr;text-align:center}.v7-goaltext{text-align:center}.v7-rating button{min-height:70px}.v7-compare{grid-template-columns:1fr}}
+</style>`);
